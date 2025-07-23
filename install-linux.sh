@@ -34,17 +34,21 @@ $PYTHON_BIN --version
 
 echo "Ensuring python3-venv is installed..."
 sudo apt install -y python3-venv
-if ! python3 -m venv --help &> /dev/null; then
-    echo "Error: python3-venv is not available. Try running: sudo apt install python3-venv"
+if ! $PYTHON_BIN -m venv --help &> /dev/null; then
+    echo "Error: venv module is not available for $PYTHON_BIN. Try running: sudo apt install python3-venv"
     exit 1
 fi
 
 if [ ! -d ".venv" ]; then
-    python3 -m venv .venv
+    $PYTHON_BIN -m venv .venv
     if [ $? -ne 0 ]; then
-        echo "Error: Could not create .venv. Please ensure python3-venv is installed and you have permission to write in this directory."
-        echo "Try running: sudo apt install python3-venv"
-        exit 1
+        echo "Warning: Could not create .venv with $PYTHON_BIN. Trying with python3..."
+        python3 -m venv .venv
+        if [ $? -ne 0 ]; then
+            echo "Error: Could not create .venv with python3 either. Please ensure venv is available and you have permission to write in this directory."
+            echo "Try running: sudo apt install python3-venv"
+            exit 1
+        fi
     fi
     echo "Virtual environment .venv created."
     echo "Listing current directory contents for troubleshooting:"
@@ -68,16 +72,30 @@ else
     exit 1
 fi
 
+# Use PYTHON_BIN for all pip operations
+
 echo "Upgrading pip in venv (Ubuntu compatible)..."
-python -m pip install --upgrade pip
+$PYTHON_BIN -m pip install --upgrade pip
 
 echo "Installing dependencies: requests, pystray, Pillow (Ubuntu compatible)..."
-python -m pip install requests pystray Pillow
+$PYTHON_BIN -m pip install requests pystray Pillow
 
 echo "All dependencies installed in .venv!"
 echo "To activate the environment manually: source .venv/bin/activate"
 echo "-----------------------------------"
 echo "Installation finished! To start QRZ Monitor, run: bash start-linux.sh"
 echo "Ensuring pystray is installed..."
-python -m pip install pystray
+$PYTHON_BIN -m pip install pystray
+
 echo "pystray installation complete."
+echo "Testing Python imports for dependencies..."
+python <<EOF
+try:
+    import requests
+    import pystray
+    from PIL import Image
+    print('All dependencies imported successfully!')
+except ImportError as e:
+    print(f'Import error: {e}')
+    print('Some dependencies are missing or not installed correctly.')
+EOF
