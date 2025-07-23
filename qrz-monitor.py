@@ -1354,26 +1354,58 @@ def main():
                 if sys.platform.startswith('linux'):
                     print("Linux system - if the tray doesn't work, restart with: QRZ_TEXT_MODE=1 python qrz-monitor.py")
                     print("Press Ctrl+C to switch to text mode if the system tray doesn't appear")
-                    # Simple approach for Linux - just try to run, if it fails, continue in text mode
-                    try:
-                        # Set up signal handler for graceful interruption
-                        import signal
-                        original_handler = signal.signal(signal.SIGINT, signal.default_int_handler)
-                        
-                        icon.run()
-                        # If we reach here, user quit normally from tray menu
-                        return
-                        
-                    except KeyboardInterrupt:
-                        print("\nKeyboard interrupt detected - switching to text mode...")
-                        HAS_DISPLAY = False
+                    # Linux approach with better signal handling
+                    import signal
+                    import threading
+                    
+                    # Flag to control tray execution
+                    tray_running = threading.Event()
+                    interrupt_received = threading.Event()
+                    
+                    def signal_handler(signum, frame):
+                        print("\nKeyboard interrupt detected - stopping system tray...")
+                        interrupt_received.set()
                         try:
                             icon.stop()
                         except:
                             pass
+                    
+                    def run_tray():
+                        try:
+                            tray_running.set()
+                            icon.run()
+                        except Exception as e:
+                            print(f"Tray error: {e}")
+                        finally:
+                            tray_running.clear()
+                    
+                    # Set up signal handler
+                    original_handler = signal.signal(signal.SIGINT, signal_handler)
+                    
+                    try:
+                        # Start tray in separate thread
+                        tray_thread = threading.Thread(target=run_tray, daemon=True)
+                        tray_thread.start()
+                        
+                        # Wait for tray to start or interrupt
+                        if tray_running.wait(timeout=3):
+                            print("System tray started successfully")
+                            # Wait for either tray to finish or interrupt
+                            while tray_running.is_set() and not interrupt_received.is_set():
+                                time.sleep(0.1)
+                        else:
+                            print("System tray failed to start - switching to text mode")
+                            HAS_DISPLAY = False
+                        
+                        if interrupt_received.is_set():
+                            print("Switching to text mode...")
+                            HAS_DISPLAY = False
+                        elif not tray_running.is_set():
+                            # Tray exited normally
+                            return
+                            
                     except Exception as e:
-                        print(f"System tray failed on Linux: {e}")
-                        print("Switching to text mode...")
+                        print(f"System tray setup failed: {e}")
                         HAS_DISPLAY = False
                     finally:
                         # Restore original signal handler
@@ -1382,12 +1414,30 @@ def main():
                         except:
                             pass
                 else:
-                    # Windows and other systems - run normally
+                    # Windows and other systems - run with better interrupt handling
                     print("Windows/Other system detected - running tray normally")
+                    import signal
+                    
+                    interrupt_received = False
+                    
+                    def signal_handler(signum, frame):
+                        nonlocal interrupt_received
+                        print("\nKeyboard interrupt detected - switching to text mode...")
+                        interrupt_received = True
+                        try:
+                            icon.stop()
+                        except:
+                            pass
+                    
+                    original_handler = signal.signal(signal.SIGINT, signal_handler)
+                    
                     try:
                         icon.run()
-                        # If we get here, the tray exited normally (user quit)
-                        return  # Exit the program
+                        if not interrupt_received:
+                            # If we get here, the tray exited normally (user quit)
+                            return  # Exit the program
+                        else:
+                            HAS_DISPLAY = False
                     except KeyboardInterrupt:
                         print("\nKeyboard interrupt detected - switching to text mode...")
                         HAS_DISPLAY = False
@@ -1398,6 +1448,12 @@ def main():
                     except Exception as e:
                         print(f"System tray error: {e} - falling back to text mode...")
                         HAS_DISPLAY = False
+                    finally:
+                        # Restore original signal handler
+                        try:
+                            signal.signal(signal.SIGINT, original_handler)
+                        except:
+                            pass
                     
             except Exception as e:
                 print(f"Failed to create system tray icon: {e}")
