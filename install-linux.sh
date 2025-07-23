@@ -42,3 +42,6 @@ echo "All dependencies installed in .venv!"
 echo "To activate the environment manually: source .venv/bin/activate"
 echo "-----------------------------------"
 echo "Installation finished! To start QRZ Monitor, run: bash start-linux.sh"
+echo "Ensuring pystray is installed..."
+python -m pip install pystray
+echo "pystray installation complete."
