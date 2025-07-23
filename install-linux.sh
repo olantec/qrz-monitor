@@ -30,9 +30,20 @@ if [ ! -d ".venv" ]; then
         exit 1
     fi
     echo "Virtual environment .venv created."
+    echo "Listing current directory contents for troubleshooting:"
+    ls -l
+    if [ ! -d ".venv" ]; then
+        echo "Error: .venv directory was not created. Please check for errors above and ensure you have write permissions."
+        exit 1
+    fi
 fi
 
 echo "Activating virtual environment (.venv)..."
+if [ ! -f ".venv/bin/activate" ]; then
+    echo "Error: .venv/bin/activate not found. The virtual environment may not have been created correctly or you are in the wrong directory."
+    echo "Check if .venv exists and contains the 'bin/activate' script."
+    exit 1
+fi
 source .venv/bin/activate
 if [ $? -ne 0 ]; then
     echo "Error: Could not activate .venv. Please check Python and venv installation."
