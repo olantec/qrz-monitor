@@ -1,2 +1,191 @@
-# qrz-monitor
-Monitor by Log contacts and submit to qrz.digital api , monitoring JTDX, M1NN and others hamradio family softwares
+
+# QRZ Monitor
+
+---
+
+## 🇧🇷 Português
+
+Monitor de logs de contatos de rádio, integrando com a API do QRZ Digital. Compatível com softwares como JTDX, M1NN, WSJT-X e outros da família hamradio.
+
+### Funcionalidades
+- Recebe logs via UDP de softwares de rádio digital
+- Envia automaticamente os logs para a API do QRZ Digital
+- Armazena logs pendentes e faz reenvio automático em caso de falha de conexão
+- Suporte a modo texto (console) e modo gráfico (tray icon, Linux/X11)
+- Configuração automática de usuário, senha e porta UDP via arquivo `config.ini` ou prompts interativos
+- Autenticação segura com token
+- Compatível com Linux
+
+### Requisitos
+- Python 3.12+
+- Linux (modo gráfico requer ambiente X11)
+- Dependências: requests, pystray, Pillow (instale via pip)
+
+
+### Instalação
+Linux:
+```bash
+chmod +x install-linux.sh start-linux.sh
+./start-linux.sh
+```
+Windows:
+1. Instale o Python 3.12+ pelo site oficial: https://www.python.org/downloads/windows/
+2. Clique com o botão direito em install-windows.bat e escolha "Executar como administrador" para instalar as dependências.
+3. Depois, clique com o botão direito em start-windows.bat e escolha "Executar como administrador" para iniciar o monitor.
+   Ou, no Prompt de Comando (cmd) ou PowerShell, execute:
+   ```cmd
+   install-windows.bat
+   start-windows.bat
+   ```
+
+### Uso
+Linux:
+```bash
+./start-linux.sh
+```
+Windows:
+```cmd
+install-windows.bat
+start-windows.bat
+```
+No primeiro uso, informe seu indicativo e senha quando solicitado.
+O monitor ficará aguardando logs dos softwares compatíveis na porta UDP configurada (padrão: 2333).
+Logs enviados com sucesso são confirmados no console. Logs pendentes são reenviados automaticamente.
+
+### Configuração
+Edite o arquivo `config.ini` para definir:
+- Username: seu indicativo
+- Password: sua senha
+- UDPPort: porta UDP para receber os logs
+
+### Modo gráfico
+Se executado em ambiente gráfico Linux/X11, o monitor pode exibir ícone na bandeja do sistema, menu de status e janela de configurações.
+
+### Licença
+MIT
+
+---
+
+## 🇬🇧 English
+
+Radio log monitor integrating with QRZ Digital API. Compatible with JTDX, M1NN, WSJT-X and other hamradio family software.
+
+### Features
+- Receives logs via UDP from digital radio software
+- Automatically sends logs to QRZ Digital API
+- Stores pending logs and retries automatically if connection fails
+- Supports text mode (console) and graphical mode (tray icon, Linux/X11)
+- Automatic configuration of username, password and UDP port via `config.ini` or interactive prompts
+- Secure authentication with token
+- Compatible with Linux
+
+### Requirements
+- Python 3.12+
+- Linux (graphical mode requires X11)
+- Dependencies: requests, pystray, Pillow (install via pip)
+
+
+### Installation
+Linux:
+```bash
+chmod +x install-linux.sh start-linux.sh
+./start-linux.sh
+```
+Windows:
+1. Download and install Python 3.12+ from https://www.python.org/downloads/windows/
+2. Right-click install-windows.bat and choose "Run as administrator" to install dependencies.
+3. Then, right-click start-windows.bat and choose "Run as administrator" to start the monitor.
+   Or, in Command Prompt (cmd) or PowerShell, run:
+   ```cmd
+   install-windows.bat
+   start-windows.bat
+   ```
+
+### Usage
+Linux:
+```bash
+./start-linux.sh
+```
+Windows:
+```cmd
+install-windows.bat
+start-windows.bat
+```
+On first use, enter your callsign and password when prompted.
+The monitor will wait for logs from compatible software on the configured UDP port (default: 2333).
+Successfully sent logs are confirmed in the console. Pending logs are retried automatically.
+
+### Configuration
+Edit the `config.ini` file to set:
+- Username: your callsign
+- Password: your password
+- UDPPort: UDP port to receive logs
+
+### Graphical mode
+If running in a graphical Linux/X11 environment, the monitor can show a system tray icon, status menu and configuration window.
+
+### License
+MIT
+
+---
+
+## 🇪🇸 Español
+
+Monitor de registros de radio, integrando con la API de QRZ Digital. Compatible con JTDX, M1NN, WSJT-X y otros programas de radioaficionados.
+
+### Funcionalidades
+- Recibe registros vía UDP de programas de radio digital
+- Envía automáticamente los registros a la API de QRZ Digital
+- Almacena registros pendientes y reintenta automáticamente en caso de fallo de conexión
+- Soporte para modo texto (consola) y modo gráfico (icono en la bandeja, Linux/X11)
+- Configuración automática de usuario, contraseña y puerto UDP vía archivo `config.ini` o preguntas interactivas
+- Autenticación segura con token
+- Compatible con Linux
+
+### Requisitos
+- Python 3.12+
+- Linux (el modo gráfico requiere X11)
+- Dependencias: requests, pystray, Pillow (instalar con pip)
+
+
+### Instalación
+Linux:
+```bash
+chmod +x install-linux.sh start-linux.sh
+./start-linux.sh
+```
+Windows:
+1. Descargue e instale Python 3.12+ desde https://www.python.org/downloads/windows/
+2. Haga clic derecho en install-windows.bat y elija "Ejecutar como administrador" para instalar las dependencias.
+3. Luego, haga clic derecho en start-windows.bat y elija "Ejecutar como administrador" para iniciar el monitor.
+   O, en el símbolo del sistema (cmd) o PowerShell, ejecute:
+   ```cmd
+   install-windows.bat
+   start-windows.bat
+   ```
+
+### Uso
+Linux:
+```bash
+./start-linux.sh
+```
+Windows:
+```cmd
+install-windows.bat
+start-windows.bat
+```
+En el primer uso, ingrese su indicativo y contraseña cuando se le solicite.
+El monitor esperará registros de los programas compatibles en el puerto UDP configurado (por defecto: 2333).
+Los registros enviados con éxito se confirman en la consola. Los registros pendientes se reenvían automáticamente.
+
+### Configuración
+Edite el archivo `config.ini` para definir:
+- Username: su indicativo
+- Password: su contraseña
+- UDPPort: puerto UDP para recibir los registros
+
+### Modo gráfico
+Si se ejecuta en entorno gráfico Linux/X11, el monitor puede mostrar un icono en la bandeja del sistema, menú de estado y ventana de configuración.
+
+### Licencia
+MIT
