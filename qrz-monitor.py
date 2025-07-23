@@ -1095,27 +1095,115 @@ def on_quit():
 
 def show_text_menu():
     """Shows text-based menu for systems without GUI"""
-    print("\nQRZ Monitor is now running!")
-    print("Press Ctrl+C at any time to access the menu")
+    print("\nQRZ Monitor is now running in background!")
+    print("\nTo access the interactive menu:")
+    print("  1. Press Ctrl+C to stop background mode")
+    print("  2. Then choose from the menu options")
+    print("\nAlternatively, restart with different options using the start script.")
+    print("Background monitoring will continue...")
     
     try:
-        # Keep running and show periodic status
+        # Simple background loop with periodic status
         last_status_time = 0
+        
         while True:
             current_time = time.time()
             
-            # Show status every 30 seconds
-            if current_time - last_status_time > 30:
-                print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Status: {'RUNNING' if running else 'STOPPED'} - {get_connection_status()}")
+            # Show status every 2 minutes
+            if current_time - last_status_time > 120:
+                print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Background Status:")
+                print(f"  Monitor: {'RUNNING' if running else 'STOPPED'}")
+                print(f"  Connection: {get_connection_status()}")
                 if pending_logs:
-                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Pending logs: {len(pending_logs)}")
+                    print(f"  Pending logs: {len(pending_logs)}")
+                print("  (Press Ctrl+C for menu)")
                 last_status_time = current_time
             
-            time.sleep(1)
+            time.sleep(5)  # Check every 5 seconds
             
     except KeyboardInterrupt:
-        # Show interactive menu when user presses Ctrl+C
-        show_interactive_menu()
+        print("\n" + "="*50)
+        print("BACKGROUND MODE INTERRUPTED")
+        print("="*50)
+        
+        # Show quick status
+        print(f"Current Status: {'RUNNING' if running else 'STOPPED'} - {get_connection_status()}")
+        if pending_logs:
+            print(f"Pending logs: {len(pending_logs)}")
+        
+        print("\nWhat would you like to do?")
+        print("1. Open interactive menu")
+        print("2. Show detailed status")
+        print("3. Return to background mode")
+        print("4. Exit program")
+        
+        try:
+            choice = input("\nEnter choice (1-4): ").strip()
+            
+            if choice == "1":
+                show_interactive_menu()
+            elif choice == "2":
+                show_detailed_status()
+                input("\nPress Enter to continue...")
+                show_text_menu()  # Return to background
+            elif choice == "3":
+                print("Returning to background mode...")
+                show_text_menu()  # Recursive call to restart background
+            elif choice == "4":
+                print("Exiting QRZ Monitor...")
+                on_quit()
+            else:
+                print("Invalid choice. Returning to background mode...")
+                show_text_menu()
+                
+        except KeyboardInterrupt:
+            print("\nExiting QRZ Monitor...")
+            on_quit()
+        except Exception as e:
+            print(f"Error: {e}")
+            print("Returning to background mode...")
+            show_text_menu()
+
+def show_detailed_status():
+    """Show detailed status information"""
+    print("\n" + "="*60)
+    print("DETAILED STATUS REPORT")
+    print("="*60)
+    
+    # Monitor status
+    print(f"Monitor Status: {'RUNNING' if running else 'STOPPED'}")
+    print(f"Connection: {get_connection_status()}")
+    
+    # Configuration
+    print(f"UDP Port: {config.get('DEFAULT', 'UDPPort', fallback='2333')}")
+    username = get_username()
+    if username:
+        print(f"Configured User: {username}")
+    else:
+        print("User: Not configured")
+    
+    # Pending logs
+    if pending_logs:
+        print(f"Pending Logs: {len(pending_logs)} waiting to be sent")
+        
+        # Show details of last few logs
+        recent_logs = pending_logs[-3:] if len(pending_logs) > 3 else pending_logs
+        print("Recent pending logs:")
+        for i, log_entry in enumerate(recent_logs, 1):
+            try:
+                timestamp = log_entry.get('timestamp', 'Unknown')
+                retry_count = log_entry.get('retry_count', 0)
+                print(f"  {i}. {timestamp[:19]} (retry: {retry_count})")
+            except:
+                print(f"  {i}. [Log entry details unavailable]")
+    else:
+        print("Pending Logs: None")
+    
+    # Runtime info
+    print(f"Text Mode: {'Active' if not HAS_DISPLAY else 'Inactive'}")
+    print(f"Platform: {sys.platform}")
+    
+    print("="*60)
 
 def show_interactive_menu():
     """Shows interactive menu"""
