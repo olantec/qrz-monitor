@@ -1200,6 +1200,54 @@ def show_interactive_menu():
             print(f"Error: {e}")
             input("Press Enter to continue...")
 
+def configure_initial_credentials():
+    """Configure username and password for first-time setup"""
+    print("\n" + "="*50)
+    print("INITIAL SETUP - QRZ DIGITAL CREDENTIALS")
+    print("="*50)
+    print("Please enter your QRZ Digital account credentials:")
+    print("(Get your account at https://qrz.digital)")
+    print("")
+    
+    try:
+        username = input("Username (callsign): ").strip().upper()
+        
+        if not username:
+            print("❌ Username is required!")
+            return False
+            
+        import getpass
+        try:
+            password = getpass.getpass("Password: ")
+        except Exception:
+            # Fallback if getpass doesn't work
+            password = input("Password: ").strip()
+        
+        if not password:
+            print("❌ Password is required!")
+            return False
+        
+        # Save credentials
+        config.set('DEFAULT', 'Username', username)
+        encoded_password = encode_password(password)
+        config.set('DEFAULT', 'Password', encoded_password)
+        save_config()
+        
+        print(f"✓ Credentials saved for user: {username}")
+        
+        # Test the credentials
+        print("Testing credentials...")
+        if authenticate():
+            print("✓ Credentials are valid!")
+            return True
+        else:
+            print("✗ Credential test failed. Please check your username and password.")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error saving credentials: {e}")
+        return False
+
 def configure_settings_text():
     """Configure settings in text mode"""
     print("\n" + "="*50)
@@ -1210,12 +1258,6 @@ def configure_settings_text():
         # Show current settings
         print("\nCurrent Settings:")
         
-        api_key = config.get('DEFAULT', 'APIKey', fallback='')
-        if api_key:
-            print(f"API Key: {'*' * 20}...{api_key[-4:]}")
-        else:
-            print("API Key: Not set")
-        
         udp_port = config.get('DEFAULT', 'UDPPort', fallback='2333')
         print(f"UDP Port: {udp_port}")
         
@@ -1224,34 +1266,54 @@ def configure_settings_text():
             print(f"Username: {username}")
         else:
             print("Username: Not set")
+            
+        # Check if password is configured
+        password = get_password()
+        if password:
+            print("Password: ****** (configured)")
+        else:
+            print("Password: Not set")
         
         print("\nWhat would you like to configure?")
-        print("1. API Key")
+        print("1. Username and Password")
         print("2. UDP Port")
-        print("3. Username")
         print("0. Return to main menu")
         
-        choice = input("\nEnter choice (0-3): ").strip()
+        choice = input("\nEnter choice (0-2): ").strip()
         
         if choice == "1":
-            # Configure API Key
-            print("\nEnter your QRZ Digital API Key:")
-            print("(Get it from https://qrz.digital/settings)")
-            new_api_key = input("API Key: ").strip()
+            # Configure Username and Password
+            print("\nEnter your QRZ Digital credentials:")
+            print("(Get your account at https://qrz.digital)")
             
-            if new_api_key:
-                config.set('DEFAULT', 'APIKey', new_api_key)
-                save_config()
-                print("✓ API Key saved successfully!")
+            new_username = input("Username (callsign): ").strip().upper()
+            
+            if new_username:
+                import getpass
+                try:
+                    new_password = getpass.getpass("Password: ")
+                except Exception:
+                    # Fallback if getpass doesn't work
+                    new_password = input("Password: ").strip()
                 
-                # Test the new API key
-                print("Testing API key...")
-                if authenticate():
-                    print("✓ API key is valid!")
+                if new_password:
+                    # Save username and encoded password
+                    config.set('DEFAULT', 'Username', new_username)
+                    encoded_password = encode_password(new_password)
+                    config.set('DEFAULT', 'Password', encoded_password)
+                    save_config()
+                    print(f"✓ Username and password saved successfully!")
+                    
+                    # Test the new credentials
+                    print("Testing credentials...")
+                    if authenticate():
+                        print("✓ Credentials are valid!")
+                    else:
+                        print("✗ Credential test failed. Please check your username and password.")
                 else:
-                    print("✗ API key test failed. Please check your key.")
+                    print("Password is required.")
             else:
-                print("No changes made.")
+                print("Username is required.")
         
         elif choice == "2":
             # Configure UDP Port
@@ -1273,19 +1335,6 @@ def configure_settings_text():
                     print("No changes made.")
             except ValueError:
                 print("✗ Invalid port number")
-        
-        elif choice == "3":
-            # Configure Username
-            print(f"\nCurrent Username: {username if username else 'Not set'}")
-            print("Enter new username:")
-            new_username = input("Username: ").strip()
-            
-            if new_username:
-                config.set('DEFAULT', 'Username', new_username)
-                save_config()
-                print(f"✓ Username changed to {new_username}")
-            else:
-                print("No changes made.")
         
         elif choice == "0":
             return
@@ -1482,7 +1531,7 @@ def main():
             if not username or not password:
                 print("\nCredentials not configured. Please configure now:")
                 try:
-                    configure_settings_text()
+                    configure_initial_credentials()
                 except KeyboardInterrupt:
                     print("\nConfiguration cancelled - exiting...")
                     return
