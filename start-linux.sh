@@ -22,4 +22,4 @@ else
 fi
 
 echo "Starting QRZ Monitor..."
-python3 qrz-monitor.py
+.venv/bin/python3 qrz-monitor.py
