@@ -25,11 +25,19 @@ if [ ! -d ".venv" ]; then
     echo "Virtual environment .venv created."
 fi
 
+echo "Activating virtual environment (.venv)..."
 source .venv/bin/activate
-echo "Upgrading pip in venv..."
-pip install --upgrade pip
-echo "Installing dependencies in venv..."
-pip install requests pystray Pillow
+if [ $? -ne 0 ]; then
+    echo "Error: Could not activate .venv. Please check Python and venv installation."
+    exit 1
+fi
+
+echo "Upgrading pip in venv (Ubuntu compatible)..."
+python -m pip install --upgrade pip
+
+echo "Installing dependencies: requests, pystray, Pillow (Ubuntu compatible)..."
+python -m pip install requests pystray Pillow
+
 echo "All dependencies installed in .venv!"
 echo "To activate the environment manually: source .venv/bin/activate"
 echo "-----------------------------------"
