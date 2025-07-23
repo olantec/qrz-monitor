@@ -20,11 +20,17 @@ sudo apt update
 echo "Installing Python3, pip and venv if needed..."
 sudo apt install -y python3 python3-pip
 echo "Checking Python3 installation..."
-if ! command -v python3 &> /dev/null; then
-    echo "Error: python3 is not installed. Please install Python 3."
+PYTHON_BIN=""
+if command -v python3 &> /dev/null; then
+    PYTHON_BIN="python3"
+elif command -v python &> /dev/null; then
+    PYTHON_BIN="python"
+else
+    echo "Error: Python is not installed or not found in PATH. Please install Python 3."
     exit 1
 fi
-echo "Python3 found: $(python3 --version)"
+echo "Python found: $PYTHON_BIN ($(which $PYTHON_BIN))"
+$PYTHON_BIN --version
 
 echo "Ensuring python3-venv is installed..."
 sudo apt install -y python3-venv
