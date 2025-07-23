@@ -22,6 +22,11 @@ sudo apt install -y python3 python3-pip python3-venv
 
 if [ ! -d ".venv" ]; then
     python3 -m venv .venv
+    if [ $? -ne 0 ]; then
+        echo "Error: Could not create .venv. Please ensure python3-venv is installed and you have permission to write in this directory."
+        echo "Try running: sudo apt install python3-venv"
+        exit 1
+    fi
     echo "Virtual environment .venv created."
 fi
 
