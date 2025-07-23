@@ -10,6 +10,12 @@
 #   - Install all required Python dependencies in the venv
 
 echo "=== QRZ Monitor Linux Installer ==="
+echo "Checking for updates in the repository..."
+GIT_OUTPUT=$(git pull)
+if [[ "$GIT_OUTPUT" == *"Updating"* || "$GIT_OUTPUT" == *"changed"* || "$GIT_OUTPUT" == *"Fast-forward"* ]]; then
+    echo "Repository updated. Please re-run this install script to ensure all changes are applied."
+    exit 0
+fi
 echo "This script will install all dependencies for QRZ Monitor."
 echo "If you see any errors, please check your internet connection and permissions."
 echo "-----------------------------------"
