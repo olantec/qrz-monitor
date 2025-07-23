@@ -1288,6 +1288,7 @@ def main():
             print("No desktop environment detected - running in text mode")
             HAS_DISPLAY = False
     
+    # Try GUI mode first if available
     if HAS_DISPLAY:
         try:
             print("Attempting to create system tray icon...")
@@ -1312,26 +1313,49 @@ def main():
                 print("Linux detected - using timeout detection for tray support")
                 # Set up a timeout to detect if tray isn't working (Linux only)
                 import signal
+                import threading
+                
+                tray_failed = threading.Event()
+                
                 def timeout_handler(signum, frame):
-                    print("\nSystem tray timeout - switching to text mode...")
+                    print("\nSystem tray timeout detected - tray not responding")
+                    tray_failed.set()
                     raise KeyboardInterrupt()
                 
-                # Give the tray 5 seconds to initialize
-                signal.signal(signal.SIGALRM, timeout_handler)
-                if hasattr(signal, 'alarm'):
-                    signal.alarm(5)
+                # Set up signal handler
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
                 
                 try:
+                    # Give the tray 5 seconds to initialize
+                    if hasattr(signal, 'alarm'):
+                        signal.alarm(5)
+                    
+                    print("Waiting for system tray to initialize...")
                     icon.run()
+                    
                 except KeyboardInterrupt:
-                    print("\nSwitching to text mode...")
+                    if tray_failed.is_set():
+                        print("System tray initialization timed out - continuing in text mode...")
+                    else:
+                        print("System tray interrupted by user - continuing in text mode...")
                     HAS_DISPLAY = False
+                except Exception as e:
+                    print(f"System tray error: {e} - continuing in text mode...")
+                    HAS_DISPLAY = False
+                finally:
+                    # Always clean up the alarm and restore signal handler
                     if hasattr(signal, 'alarm'):
                         signal.alarm(0)  # Cancel alarm
+                    signal.signal(signal.SIGALRM, old_handler)  # Restore old handler
+                    
             else:
                 # Windows and other systems - run normally without timeout
                 print("Windows/Other system detected - running tray normally")
-                icon.run()
+                try:
+                    icon.run()
+                except Exception as e:
+                    print(f"System tray error: {e} - falling back to text mode...")
+                    HAS_DISPLAY = False
                 
         except Exception as e:
             print(f"Failed to create system tray icon: {e}")
@@ -1340,6 +1364,7 @@ def main():
             print("Falling back to text mode...")
             HAS_DISPLAY = False
     
+    # Always ensure we continue in text mode if GUI failed or isn't available
     if not HAS_DISPLAY:
         # Text-only mode
         print("\n" + "="*60)
@@ -1365,7 +1390,21 @@ def main():
             start_monitoring()
         
         # Show text menu
-        show_text_menu()
+        try:
+            show_text_menu()
+        except KeyboardInterrupt:
+            print("\nGracefully shutting down...")
+            on_quit()
+        except Exception as e:
+            print(f"Unexpected error in text mode: {e}")
+            print("Program will continue running...")
+            # Keep program alive even if text menu fails
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                print("\nShutting down...")
+                on_quit()
 
 if __name__ == "__main__":
     main()

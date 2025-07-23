@@ -20,16 +20,18 @@ if [ ! -d ".venv" ]; then
 fi
 
 echo "Choose mode to start QRZ Monitor:"
-echo "1 - Graphical interface (system tray, requires X11)"
-echo "2 - Text mode (console only)"
+echo "1 - Auto-detect mode (tries GUI first, falls back to text)"
+echo "2 - Force text mode only"
 read -p "Enter 1 or 2: " mode
 
 if [ "$mode" = "1" ]; then
-    echo "Starting QRZ Monitor in graphical mode..."
+    echo "Starting QRZ Monitor in auto-detect mode..."
     .venv/bin/python3 qrz-monitor.py
 elif [ "$mode" = "2" ]; then
-    echo "Starting QRZ Monitor in text mode..."
-    .venv/bin/python3 qrz-monitor-terminal.py
+    echo "Starting QRZ Monitor in text-only mode..."
+    # Force text mode by unsetting DISPLAY
+    unset DISPLAY
+    .venv/bin/python3 qrz-monitor.py
 else
     echo "Invalid option. Exiting."
     exit 1
