@@ -40,8 +40,8 @@ $PYTHON_BIN --version
 
 echo "Ensuring python3-venv is installed..."
 sudo apt install -y python3-venv
-if ! $PYTHON_BIN -m venv --help &> /dev/null; then
-    echo "Error: venv module is not available for $PYTHON_BIN. Try running: sudo apt install python3-venv"
+if ! python3 -m venv --help &> /dev/null; then
+    echo "Error: venv module is not available for python3. Try running: sudo apt install python3-venv"
     exit 1
 fi
 
