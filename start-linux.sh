@@ -1,6 +1,12 @@
 #!/bin/bash
 # Starts QRZ Monitor on Linux
 
+# Activate venv if present
+if [ -d ".venv" ]; then
+    echo "Activating Python virtual environment (.venv)..."
+    source .venv/bin/activate
+fi
+
 # Function to check dependencies
 check_deps() {
     python3 --version >/dev/null 2>&1 || return 1

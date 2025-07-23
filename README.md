@@ -3,7 +3,10 @@
 
 ---
 
+
 ## 🇧🇷 Português
+
+Projeto oficial do QRZ Digital: [https://qrz.digital](https://qrz.digital)
 
 Monitor de logs de contatos de rádio, integrando com a API do QRZ Digital. Compatível com softwares como JTDX, M1NN, WSJT-X e outros da família hamradio.
 
@@ -21,6 +24,19 @@ Monitor de logs de contatos de rádio, integrando com a API do QRZ Digital. Comp
 - Linux (modo gráfico requer ambiente X11)
 - Dependências: requests, pystray, Pillow (instale via pip)
 
+
+### Obtenção do código fonte
+Para baixar o QRZ Monitor, instale o Git e clone o repositório:
+```bash
+sudo apt install git        # Debian/Ubuntu/Raspberry Pi
+git clone https://github.com/olantec/qrz-monitor.git
+cd qrz-monitor
+```
+No Windows, baixe e instale o Git em https://git-scm.com/download/win e use o Git Bash ou o Prompt de Comando:
+```cmd
+git clone https://github.com/olantec/qrz-monitor.git
+cd qrz-monitor
+```
 
 ### Instalação
 Linux:
@@ -66,7 +82,10 @@ MIT
 
 ---
 
+
 ## 🇬🇧 English
+
+Official QRZ Digital project: [https://qrz.digital](https://qrz.digital)
 
 Radio log monitor integrating with QRZ Digital API. Compatible with JTDX, M1NN, WSJT-X and other hamradio family software.
 
@@ -84,6 +103,19 @@ Radio log monitor integrating with QRZ Digital API. Compatible with JTDX, M1NN, 
 - Linux (graphical mode requires X11)
 - Dependencies: requests, pystray, Pillow (install via pip)
 
+
+### Getting the source code
+To download QRZ Monitor, install Git and clone the repository:
+```bash
+sudo apt install git        # Debian/Ubuntu/Raspberry Pi
+git clone https://github.com/olantec/qrz-monitor.git
+cd qrz-monitor
+```
+On Windows, download and install Git from https://git-scm.com/download/win and use Git Bash or Command Prompt:
+```cmd
+git clone https://github.com/olantec/qrz-monitor.git
+cd qrz-monitor
+```
 
 ### Installation
 Linux:
@@ -129,7 +161,10 @@ MIT
 
 ---
 
+
 ## 🇪🇸 Español
+
+Proyecto oficial de QRZ Digital: [https://qrz.digital](https://qrz.digital)
 
 Monitor de registros de radio, integrando con la API de QRZ Digital. Compatible con JTDX, M1NN, WSJT-X y otros programas de radioaficionados.
 
@@ -147,6 +182,19 @@ Monitor de registros de radio, integrando con la API de QRZ Digital. Compatible 
 - Linux (el modo gráfico requiere X11)
 - Dependencias: requests, pystray, Pillow (instalar con pip)
 
+
+### Obtener el código fuente
+Para descargar QRZ Monitor, instale Git y clone el repositorio:
+```bash
+sudo apt install git        # Debian/Ubuntu/Raspberry Pi
+git clone https://github.com/olantec/qrz-monitor.git
+cd qrz-monitor
+```
+En Windows, descargue e instale Git desde https://git-scm.com/download/win y use Git Bash o el símbolo del sistema:
+```cmd
+git clone https://github.com/olantec/qrz-monitor.git
+cd qrz-monitor
+```
 
 ### Instalación
 Linux:
