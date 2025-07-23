@@ -1,27 +1,25 @@
 #!/bin/bash
 # Starts QRZ Monitor on Linux
+# Usage:
+#   bash start-linux.sh
+#
+# This script will:
+#   - Activate the Python virtual environment (.venv)
+#   - Start QRZ Monitor
 
-# Activate venv if present
+echo "=== QRZ Monitor Starter ==="
+echo "This script will activate the Python virtual environment and start QRZ Monitor."
+echo "If you see any errors about missing dependencies, run: bash install-linux.sh"
+echo "-----------------------------------"
+
 if [ -d ".venv" ]; then
     echo "Activating Python virtual environment (.venv)..."
     source .venv/bin/activate
-fi
-
-# Function to check dependencies
-check_deps() {
-    python3 --version >/dev/null 2>&1 || return 1
-    python3 -m pip --version >/dev/null 2>&1 || return 1
-    python3 -c "import requests, pystray, PIL" >/dev/null 2>&1 || return 1
-    return 0
-}
-
-echo "Checking dependencies..."
-if check_deps; then
-    echo "All dependencies are already installed."
 else
-    echo "Missing dependencies. Installing..."
-    ./install-linux.sh
+    echo "Virtual environment (.venv) not found!"
+    echo "Please run: bash install-linux.sh"
+    exit 1
 fi
 
-# Start the monitor
+echo "Starting QRZ Monitor..."
 python3 qrz-monitor.py
