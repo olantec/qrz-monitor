@@ -1274,123 +1274,167 @@ def configure_settings_text():
 def main():
     global icon, HAS_DISPLAY
     
-    load_config()
-    load_pending_logs()  # Loads pending logs on startup
+    # Set up global signal handling for clean interruption
+    import signal
+    def global_interrupt_handler(signum, frame):
+        print("\nGlobal interrupt detected - initiating shutdown...")
+        on_quit()
+        sys.exit(0)
     
-    # Force text mode if requested via environment variable
-    if os.environ.get('QRZ_TEXT_MODE', '').lower() in ['1', 'true', 'yes']:
-        print("Text mode forced via QRZ_TEXT_MODE environment variable")
-        HAS_DISPLAY = False
+    # Install global handler
+    signal.signal(signal.SIGINT, global_interrupt_handler)
     
-    # Check if we're on Linux and if display is available
-    if sys.platform.startswith('linux') and HAS_DISPLAY:
-        print("Detected Linux system")
-        # Check if DISPLAY is set
-        if not os.environ.get('DISPLAY'):
-            print("No DISPLAY environment variable found - running in text mode")
+    try:
+        load_config()
+        load_pending_logs()  # Loads pending logs on startup
+        
+        # Force text mode if requested via environment variable
+        if os.environ.get('QRZ_TEXT_MODE', '').lower() in ['1', 'true', 'yes']:
+            print("Text mode forced via QRZ_TEXT_MODE environment variable")
             HAS_DISPLAY = False
-        elif not os.environ.get('XDG_CURRENT_DESKTOP') and not os.environ.get('DESKTOP_SESSION'):
-            print("No desktop environment detected - running in text mode")
-            HAS_DISPLAY = False
+        
+        # Check if we're on Linux and if display is available
+        if sys.platform.startswith('linux') and HAS_DISPLAY:
+            print("Detected Linux system")
+            # Check if DISPLAY is set
+            if not os.environ.get('DISPLAY'):
+                print("No DISPLAY environment variable found - running in text mode")
+                HAS_DISPLAY = False
+            elif not os.environ.get('XDG_CURRENT_DESKTOP') and not os.environ.get('DESKTOP_SESSION'):
+                print("No desktop environment detected - running in text mode")
+                HAS_DISPLAY = False
     
-    # Try GUI mode first if available (but skip complex timeout logic on Linux)
-    if HAS_DISPLAY:
-        try:
-            print("Attempting to create system tray icon...")
-            # Creates tray icon using favicon.ico
-            icon_image = get_status_icon()
-            initial_tooltip = get_tooltip_text()
-            dynamic_name = get_dynamic_app_name()
-            
-            print(f"Creating icon with name: {dynamic_name}")
-            print(f"Tooltip: {initial_tooltip}")
-            
-            icon = Icon(dynamic_name, icon_image, initial_tooltip, menu=Menu(get_menu))
-            
-            # Starts monitoring if there's a configured user
-            if get_username():  # Uses function to ensure uppercase
-                start_monitoring()
+        # Try GUI mode first if available (but skip complex timeout logic on Linux)
+        if HAS_DISPLAY:
+            try:
+                print("Attempting to create system tray icon...")
+                # Creates tray icon using favicon.ico
+                icon_image = get_status_icon()
+                initial_tooltip = get_tooltip_text()
+                dynamic_name = get_dynamic_app_name()
+                
+                print(f"Creating icon with name: {dynamic_name}")
+                print(f"Tooltip: {initial_tooltip}")
+                
+                icon = Icon(dynamic_name, icon_image, initial_tooltip, menu=Menu(get_menu))
+                
+                # Starts monitoring if there's a configured user
+                if get_username():  # Uses function to ensure uppercase
+                    start_monitoring()
 
-            print("Starting system tray icon...")
-            
+                print("Starting system tray icon...")
+                
+                if sys.platform.startswith('linux'):
+                    print("Linux system - if the tray doesn't work, restart with: QRZ_TEXT_MODE=1 python qrz-monitor.py")
+                    print("Press Ctrl+C to switch to text mode if the system tray doesn't appear")
+                    # Simple approach for Linux - just try to run, if it fails, continue in text mode
+                    try:
+                        # Set up signal handler for graceful interruption
+                        import signal
+                        original_handler = signal.signal(signal.SIGINT, signal.default_int_handler)
+                        
+                        icon.run()
+                        # If we reach here, user quit normally from tray menu
+                        return
+                        
+                    except KeyboardInterrupt:
+                        print("\nKeyboard interrupt detected - switching to text mode...")
+                        HAS_DISPLAY = False
+                        try:
+                            icon.stop()
+                        except:
+                            pass
+                    except Exception as e:
+                        print(f"System tray failed on Linux: {e}")
+                        print("Switching to text mode...")
+                        HAS_DISPLAY = False
+                    finally:
+                        # Restore original signal handler
+                        try:
+                            signal.signal(signal.SIGINT, original_handler)
+                        except:
+                            pass
+                else:
+                    # Windows and other systems - run normally
+                    print("Windows/Other system detected - running tray normally")
+                    try:
+                        icon.run()
+                        # If we get here, the tray exited normally (user quit)
+                        return  # Exit the program
+                    except KeyboardInterrupt:
+                        print("\nKeyboard interrupt detected - switching to text mode...")
+                        HAS_DISPLAY = False
+                        try:
+                            icon.stop()
+                        except:
+                            pass
+                    except Exception as e:
+                        print(f"System tray error: {e} - falling back to text mode...")
+                        HAS_DISPLAY = False
+                    
+            except Exception as e:
+                print(f"Failed to create system tray icon: {e}")
+                if sys.platform.startswith('linux'):
+                    print("This is common on Linux systems without proper tray support")
+                    print("Try running with: QRZ_TEXT_MODE=1 python qrz-monitor.py")
+                print("Falling back to text mode...")
+                HAS_DISPLAY = False
+        
+        # Text mode - run if GUI failed or isn't available
+        if not HAS_DISPLAY:
+            print("\n" + "="*60)
+            print("QRZ MONITOR - TEXT MODE")
+            print("="*60)
             if sys.platform.startswith('linux'):
-                print("Linux system - if the tray doesn't work, restart with: QRZ_TEXT_MODE=1 python qrz-monitor.py")
-                # Simple approach for Linux - just try to run, if it fails, continue in text mode
+                print("System tray not available - using text interface")
+                print("This is normal on many Linux systems without desktop environment")
+            else:
+                print("GUI not available - using text interface")
+            print("="*60)
+            
+            # Check credentials first
+            username = get_username()
+            password = get_password()
+            
+            if not username or not password:
+                print("\nCredentials not configured. Please configure now:")
                 try:
-                    icon.run()
-                    # If we reach here, user quit normally
+                    configure_settings_text()
+                except KeyboardInterrupt:
+                    print("\nConfiguration cancelled - exiting...")
                     return
                 except Exception as e:
-                    print(f"System tray failed on Linux: {e}")
-                    print("Switching to text mode...")
-                    HAS_DISPLAY = False
-            else:
-                # Windows and other systems - run normally
-                print("Windows/Other system detected - running tray normally")
-                try:
-                    icon.run()
-                    # If we get here, the tray exited normally (user quit)
-                    return  # Exit the program
-                except Exception as e:
-                    print(f"System tray error: {e} - falling back to text mode...")
-                    HAS_DISPLAY = False
-                
-        except Exception as e:
-            print(f"Failed to create system tray icon: {e}")
-            if sys.platform.startswith('linux'):
-                print("This is common on Linux systems without proper tray support")
-                print("Try running with: QRZ_TEXT_MODE=1 python qrz-monitor.py")
-            print("Falling back to text mode...")
-            HAS_DISPLAY = False
-    
-    # Text mode - run if GUI failed or isn't available
-    if not HAS_DISPLAY:
-        print("\n" + "="*60)
-        print("QRZ MONITOR - TEXT MODE")
-        print("="*60)
-        if sys.platform.startswith('linux'):
-            print("System tray not available - using text interface")
-            print("This is normal on many Linux systems without desktop environment")
-        else:
-            print("GUI not available - using text interface")
-        print("="*60)
-        
-        # Check credentials first
-        username = get_username()
-        password = get_password()
-        
-        if not username or not password:
-            print("\nCredentials not configured. Please configure now:")
+                    print(f"Configuration error: {e}")
+            
+            # Start monitoring automatically if configured
+            if get_username():
+                start_monitoring()
+            
+            # Show text menu with proper error handling
             try:
-                configure_settings_text()
+                print("\nStarting text interface...")
+                show_text_menu()
             except KeyboardInterrupt:
-                print("\nConfiguration cancelled - exiting...")
-                return
-            except Exception as e:
-                print(f"Configuration error: {e}")
-        
-        # Start monitoring automatically if configured
-        if get_username():
-            start_monitoring()
-        
-        # Show text menu with proper error handling
-        try:
-            print("\nStarting text interface...")
-            show_text_menu()
-        except KeyboardInterrupt:
-            print("\nShutting down gracefully...")
-            on_quit()
-        except Exception as e:
-            print(f"Text interface error: {e}")
-            print("Keeping program running in background...")
-            # Fallback - keep program alive with simple loop
-            try:
-                print("Press Ctrl+C to exit...")
-                while True:
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                print("\nShutting down...")
+                print("\nShutting down gracefully...")
                 on_quit()
+            except Exception as e:
+                print(f"Text interface error: {e}")
+                print("Keeping program running in background...")
+                # Fallback - keep program alive with simple loop
+                try:
+                    print("Press Ctrl+C to exit...")
+                    while True:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    print("\nShutting down...")
+                    on_quit()
+                    
+    except KeyboardInterrupt:
+        print("\nProgram interrupted - shutting down...")
+        on_quit()
+    except Exception as e:
+        print(f"Unexpected error in main: {e}")
+        on_quit()
 
 if __name__ == "__main__":
     main()
