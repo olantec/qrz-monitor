@@ -25,6 +25,8 @@ sudo apt update
 
 echo "Installing Python3, pip and venv if needed..."
 sudo apt install -y python3 python3-pip python3-venv
+echo "Installing tkinter (python3-tk) for GUI support..."
+sudo apt install -y python3-tk
 
 echo "Creating virtual environment (.venv)..."
 python3 -m venv .venv

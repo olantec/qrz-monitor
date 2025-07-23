@@ -822,12 +822,11 @@ def main():
 
 if __name__ == "__main__":
     if HAS_DISPLAY:
-        # Runs original graphical mode
+        # Runs graphical mode
         from pystray import Icon, Menu, MenuItem
         from PIL import Image, ImageDraw
         import tkinter as tk
-        # ...here should call the graphical main, but as it's not implemented, just show a notice...
-        print("Graphical mode is not implemented in this environment. Run on desktop Linux with X11 for system tray icon support.")
+        main()
     else:
         main()
 
