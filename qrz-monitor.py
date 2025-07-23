@@ -564,7 +564,7 @@ def check_credentials():
     if not username or not password:
         if HAS_DISPLAY:
             print("Username or password not set. Opening settings window...")
-            show_settings_dialog()
+            #show_settings_dialog()
         else:
             print("Username or password not set in config.ini.")
             # Prompt for callsign (always uppercase)
