@@ -24,14 +24,41 @@ from datetime import datetime
 
 # Try to import GUI libraries, but don't fail if they're not available
 HAS_DISPLAY = True
-try:
-    from pystray import Icon, Menu, MenuItem
-    from PIL import Image, ImageDraw
-    import tkinter as tk
-except ImportError as e:
+
+# Check for forced text mode first
+if os.environ.get('QRZ_TEXT_MODE') == '1':
     HAS_DISPLAY = False
-    print(f"GUI libraries not available: {e}")
-    print("Running in text-only mode...")
+    print("Text mode forced via QRZ_TEXT_MODE environment variable")
+# Check Linux X11 display availability
+elif sys.platform.startswith('linux'):
+    if not os.environ.get('DISPLAY'):
+        HAS_DISPLAY = False
+        print("No DISPLAY environment variable - running in text mode")
+    else:
+        # Try a simple X11 test
+        try:
+            import subprocess
+            result = subprocess.run(['xset', 'q'], capture_output=True, timeout=2)
+            if result.returncode != 0:
+                HAS_DISPLAY = False
+                print("X11 not responding - running in text mode")
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+            HAS_DISPLAY = False
+            print("X11 test failed - running in text mode")
+
+# Only try to import GUI libraries if we think we have a display
+if HAS_DISPLAY:
+    try:
+        from pystray import Icon, Menu, MenuItem
+        from PIL import Image, ImageDraw
+        import tkinter as tk
+        print("GUI libraries loaded successfully")
+    except ImportError as e:
+        HAS_DISPLAY = False
+        print(f"GUI libraries not available: {e}")
+        print("Running in text-only mode...")
+else:
+    print("Skipping GUI library imports - text mode active")
 
 
 # --- Configuration ---

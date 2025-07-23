@@ -27,7 +27,14 @@ read -p "Enter 1, 2, or 3: " mode
 
 if [ "$mode" = "1" ]; then
     echo "Starting QRZ Monitor in auto-detect mode..."
-    .venv/bin/python3 qrz-monitor.py
+    # Check if X11 display is available
+    if [ -z "$DISPLAY" ] || ! command -v xset >/dev/null 2>&1 || ! xset q >/dev/null 2>&1; then
+        echo "No X11 display detected - automatically switching to text mode..."
+        QRZ_TEXT_MODE=1 .venv/bin/python3 qrz-monitor.py
+    else
+        echo "X11 display available - trying GUI mode first..."
+        .venv/bin/python3 qrz-monitor.py
+    fi
 elif [ "$mode" = "2" ]; then
     echo "Starting QRZ Monitor in text-only mode..."
     # Force text mode by setting environment variable
