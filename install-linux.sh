@@ -18,7 +18,9 @@ echo "Updating package list..."
 sudo apt update
 
 echo "Installing Python3, pip and venv if needed..."
-sudo apt install -y python3 python3-pip python3-venv
+sudo apt install -y python3 python3-pip
+echo "Ensuring python3-venv is installed..."
+sudo apt install -y python3-venv
 
 if [ ! -d ".venv" ]; then
     python3 -m venv .venv
