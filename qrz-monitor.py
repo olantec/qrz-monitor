@@ -1277,8 +1277,13 @@ def main():
     load_config()
     load_pending_logs()  # Loads pending logs on startup
     
+    # Force text mode if requested via environment variable
+    if os.environ.get('QRZ_TEXT_MODE', '').lower() in ['1', 'true', 'yes']:
+        print("Text mode forced via QRZ_TEXT_MODE environment variable")
+        HAS_DISPLAY = False
+    
     # Check if we're on Linux and if display is available
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith('linux') and HAS_DISPLAY:
         print("Detected Linux system")
         # Check if DISPLAY is set
         if not os.environ.get('DISPLAY'):
@@ -1288,7 +1293,7 @@ def main():
             print("No desktop environment detected - running in text mode")
             HAS_DISPLAY = False
     
-    # Try GUI mode first if available
+    # Try GUI mode first if available (but skip complex timeout logic on Linux)
     if HAS_DISPLAY:
         try:
             print("Attempting to create system tray icon...")
@@ -1308,51 +1313,24 @@ def main():
 
             print("Starting system tray icon...")
             
-            # Only set up timeout detection on Linux systems where tray support is uncertain
             if sys.platform.startswith('linux'):
-                print("Linux detected - using timeout detection for tray support")
-                # Set up a timeout to detect if tray isn't working (Linux only)
-                import signal
-                import threading
-                
-                tray_failed = threading.Event()
-                
-                def timeout_handler(signum, frame):
-                    print("\nSystem tray timeout detected - tray not responding")
-                    tray_failed.set()
-                    raise KeyboardInterrupt()
-                
-                # Set up signal handler
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-                
+                print("Linux system - if the tray doesn't work, restart with: QRZ_TEXT_MODE=1 python qrz-monitor.py")
+                # Simple approach for Linux - just try to run, if it fails, continue in text mode
                 try:
-                    # Give the tray 5 seconds to initialize
-                    if hasattr(signal, 'alarm'):
-                        signal.alarm(5)
-                    
-                    print("Waiting for system tray to initialize...")
                     icon.run()
-                    
-                except KeyboardInterrupt:
-                    if tray_failed.is_set():
-                        print("System tray initialization timed out - continuing in text mode...")
-                    else:
-                        print("System tray interrupted by user - continuing in text mode...")
-                    HAS_DISPLAY = False
+                    # If we reach here, user quit normally
+                    return
                 except Exception as e:
-                    print(f"System tray error: {e} - continuing in text mode...")
+                    print(f"System tray failed on Linux: {e}")
+                    print("Switching to text mode...")
                     HAS_DISPLAY = False
-                finally:
-                    # Always clean up the alarm and restore signal handler
-                    if hasattr(signal, 'alarm'):
-                        signal.alarm(0)  # Cancel alarm
-                    signal.signal(signal.SIGALRM, old_handler)  # Restore old handler
-                    
             else:
-                # Windows and other systems - run normally without timeout
+                # Windows and other systems - run normally
                 print("Windows/Other system detected - running tray normally")
                 try:
                     icon.run()
+                    # If we get here, the tray exited normally (user quit)
+                    return  # Exit the program
                 except Exception as e:
                     print(f"System tray error: {e} - falling back to text mode...")
                     HAS_DISPLAY = False
@@ -1361,18 +1339,18 @@ def main():
             print(f"Failed to create system tray icon: {e}")
             if sys.platform.startswith('linux'):
                 print("This is common on Linux systems without proper tray support")
+                print("Try running with: QRZ_TEXT_MODE=1 python qrz-monitor.py")
             print("Falling back to text mode...")
             HAS_DISPLAY = False
     
-    # Always ensure we continue in text mode if GUI failed or isn't available
+    # Text mode - run if GUI failed or isn't available
     if not HAS_DISPLAY:
-        # Text-only mode
         print("\n" + "="*60)
         print("QRZ MONITOR - TEXT MODE")
         print("="*60)
         if sys.platform.startswith('linux'):
             print("System tray not available - using text interface")
-            print("This is normal on many Linux systems")
+            print("This is normal on many Linux systems without desktop environment")
         else:
             print("GUI not available - using text interface")
         print("="*60)
@@ -1383,23 +1361,31 @@ def main():
         
         if not username or not password:
             print("\nCredentials not configured. Please configure now:")
-            configure_settings_text()
+            try:
+                configure_settings_text()
+            except KeyboardInterrupt:
+                print("\nConfiguration cancelled - exiting...")
+                return
+            except Exception as e:
+                print(f"Configuration error: {e}")
         
         # Start monitoring automatically if configured
         if get_username():
             start_monitoring()
         
-        # Show text menu
+        # Show text menu with proper error handling
         try:
+            print("\nStarting text interface...")
             show_text_menu()
         except KeyboardInterrupt:
-            print("\nGracefully shutting down...")
+            print("\nShutting down gracefully...")
             on_quit()
         except Exception as e:
-            print(f"Unexpected error in text mode: {e}")
-            print("Program will continue running...")
-            # Keep program alive even if text menu fails
+            print(f"Text interface error: {e}")
+            print("Keeping program running in background...")
+            # Fallback - keep program alive with simple loop
             try:
+                print("Press Ctrl+C to exit...")
                 while True:
                     time.sleep(1)
             except KeyboardInterrupt:
