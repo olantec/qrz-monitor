@@ -20,6 +20,9 @@ import os
 import base64
 import sys
 import xml.etree.ElementTree as ET
+import getpass
+import subprocess
+import signal
 from datetime import datetime
 
 # Try to import GUI libraries, but don't fail if they're not available
@@ -1437,16 +1440,6 @@ def configure_settings_text():
 
 def main():
     global icon, HAS_DISPLAY
-    
-    # Set up global signal handling for clean interruption
-    import signal
-    def global_interrupt_handler(signum, frame):
-        print("\nGlobal interrupt detected - initiating shutdown...")
-        on_quit()
-        sys.exit(0)
-    
-    # Install global handler
-    signal.signal(signal.SIGINT, global_interrupt_handler)
     
     try:
         load_config()
