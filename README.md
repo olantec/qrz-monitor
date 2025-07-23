@@ -1,4 +1,3 @@
-
 # QRZ Monitor
 
 ---
@@ -18,6 +17,13 @@ Monitor de logs de contatos de rádio, integrando com a API do QRZ Digital. Comp
 - Configuração automática de usuário, senha e porta UDP via arquivo `config.ini` ou prompts interativos
 - Autenticação segura com token
 - Compatível com Linux
+- Instalação automatizada via `install-linux.sh` (Linux) ou `install-windows.bat` (Windows)
+- Escolha de modo gráfico ou texto ao iniciar (`start-linux.sh`)
+- Interface gráfica com ícone na bandeja, menu de status e janela de configurações (Linux/X11)
+- Modo texto para ambientes sem interface gráfica
+- Repositório atualizado automaticamente via `git pull` no instalador
+- Detecção e instalação automática de dependências essenciais
+- Suporte a múltiplos idiomas na documentação
 
 ### Requisitos
 - Python 3.12+
@@ -97,6 +103,13 @@ Radio log monitor integrating with QRZ Digital API. Compatible with JTDX, M1NN, 
 - Automatic configuration of username, password and UDP port via `config.ini` or interactive prompts
 - Secure authentication with token
 - Compatible with Linux
+- Automated installation via `install-linux.sh` (Linux) or `install-windows.bat` (Windows)
+- Choose graphical or text mode on startup (`start-linux.sh`)
+- Graphical interface with tray icon, status menu and configuration window (Linux/X11)
+- Text mode for headless environments
+- Repository auto-update via `git pull` in installer
+- Automatic detection and installation of essential dependencies
+- Multilingual documentation support
 
 ### Requirements
 - Python 3.12+
@@ -166,16 +179,23 @@ MIT
 
 Proyecto oficial de QRZ Digital: [https://qrz.digital](https://qrz.digital)
 
-Monitor de registros de radio, integrando con la API de QRZ Digital. Compatible con JTDX, M1NN, WSJT-X y otros programas de radioaficionados.
+Monitor de registros de radio, integrando com a API de QRZ Digital. Compatible com JTDX, M1NN, WSJT-X e outros programas de radioaficionados.
 
 ### Funcionalidades
 - Recibe registros vía UDP de programas de radio digital
 - Envía automáticamente los registros a la API de QRZ Digital
 - Almacena registros pendientes y reintenta automáticamente en caso de fallo de conexión
-- Soporte para modo texto (consola) y modo gráfico (icono en la bandeja, Linux/X11)
+- Soporte para modo texto (consola) e modo gráfico (icono en la bandeja, Linux/X11)
 - Configuración automática de usuario, contraseña y puerto UDP vía archivo `config.ini` o preguntas interactivas
-- Autenticación segura con token
-- Compatible con Linux
+- Autenticación segura com token
+- Compatible com Linux
+- Instalación automatizada vía `install-linux.sh` (Linux) o `install-windows.bat` (Windows)
+- Elección de modo gráfico o texto al iniciar (`start-linux.sh`)
+- Interfaz gráfica con icono en la bandeja, menú de estado y ventana de configuración (Linux/X11)
+- Modo texto para entornos sin interfaz gráfica
+- Actualización automática del repositorio vía `git pull` en el instalador
+- Detección e instalación automática de dependencias essenciais
+- Documentación multilingüe
 
 ### Requisitos
 - Python 3.12+
@@ -226,14 +246,14 @@ En el primer uso, ingrese su indicativo y contraseña cuando se le solicite.
 El monitor esperará registros de los programas compatibles en el puerto UDP configurado (por defecto: 2333).
 Los registros enviados con éxito se confirman en la consola. Los registros pendientes se reenvían automáticamente.
 
-### Configuración
-Edite el archivo `config.ini` para definir:
-- Username: su indicativo
-- Password: su contraseña
-- UDPPort: puerto UDP para recibir los registros
+### Configuração
+Edite o arquivo `config.ini` para definir:
+- Username: seu indicativo
+- Password: sua senha
+- UDPPort: porta UDP para receber os registros
 
 ### Modo gráfico
-Si se ejecuta en entorno gráfico Linux/X11, el monitor puede mostrar un icono en la bandeja del sistema, menú de estado y ventana de configuración.
+Se executado em ambiente gráfico Linux/X11, o monitor pode exibir ícone na bandeja do sistema, menu de status e janela de configurações.
 
-### Licencia
+### Licença
 MIT
