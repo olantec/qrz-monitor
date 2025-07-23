@@ -42,7 +42,7 @@ cd qrz-monitor
 Linux:
 ```bash
 chmod +x install-linux.sh start-linux.sh
-./start-linux.sh
+./install-linux.sh
 ```
 Windows:
 1. Instale o Python 3.12+ pelo site oficial: https://www.python.org/downloads/windows/
@@ -121,7 +121,7 @@ cd qrz-monitor
 Linux:
 ```bash
 chmod +x install-linux.sh start-linux.sh
-./start-linux.sh
+./install-linux.sh
 ```
 Windows:
 1. Download and install Python 3.12+ from https://www.python.org/downloads/windows/
@@ -200,7 +200,7 @@ cd qrz-monitor
 Linux:
 ```bash
 chmod +x install-linux.sh start-linux.sh
-./start-linux.sh
+./install-linux.sh
 ```
 Windows:
 1. Descargue e instale Python 3.12+ desde https://www.python.org/downloads/windows/

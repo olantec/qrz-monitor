@@ -618,9 +618,9 @@ def udp_listener():
                     # Analisa e converte a mensagem
                     parsed_message = parse_udp_message(message)
                     if parsed_message:
-                        print(f"� Received from {addr}: {len(message)} bytes")
+                        print(f"Received from {addr}: {len(message)} bytes")
                         if message.strip().startswith('<?xml') or message.strip().startswith('<contactinfo'):
-                            print(f"🔍 N1MM Logger XML detected")
+                            print(f"N1MM Logger XML detected")
                         # Sends processed message to server
                         send_log_with_retry(parsed_message)
             except UnicodeDecodeError:
@@ -918,39 +918,39 @@ def show_pending_logs_info():
 def get_connection_status():
     """Returns connection and authentication status"""
     if is_token_valid():
-        return "● ONLINE (Authenticated)"
+        return "ONLINE (Authenticated)"
     elif test_api_connectivity():
-        return "◐ CONNECTED (No auth)"
+        return "CONNECTED (No auth)"
     else:
-        return "○ OFFLINE"
+        return "OFFLINE"
 
 def get_connection_status_with_color():
     """Returns connection status with alternative colored indicators"""
     if is_token_valid():
-        return "● Online (Authenticated)"  # Filled circle
+        return "Online (Authenticated)"  # Filled circle
     elif test_api_connectivity():
-        return "◐ Connected (No auth)"  # Half circle
+        return "Connected (No auth)"  # Half circle
     else:
-        return "○ Offline"  # Empty circle
+        return "Offline"  # Empty circle
 
 def get_tooltip_text():
     """Generates tooltip text with dynamic information"""
     connection_status = get_connection_status()
     
-    # Basic status with more visible symbols
+    # Basic status with ASCII symbols for Linux compatibility
     if running:
-        status_text = f"▶ QRZ Monitor - RUNNING\n{connection_status}"
+        status_text = f"QRZ Monitor - RUNNING\n{connection_status}"
     else:
-        status_text = f"⏸ QRZ Monitor - STOPPED\n{connection_status}"
+        status_text = f"QRZ Monitor - STOPPED\n{connection_status}"
     
     # Current UDP port with safe default value
     udp_port = config.get('DEFAULT', 'UDPPort', fallback='2333')
-    status_text += f"\n⚡ UDP Port: {udp_port}"
+    status_text += f"\nUDP Port: {udp_port}"
     
     # Pending logs information
     if pending_logs:
         pending_count = len(pending_logs)
-        status_text += f"\n� {pending_count} pending log{'s' if pending_count != 1 else ''}"
+        status_text += f"\n{pending_count} pending log{'s' if pending_count != 1 else ''}"
         
         # Shows next retry if available
         current_time = datetime.now().timestamp()
@@ -965,16 +965,16 @@ def get_tooltip_text():
             else:
                 time_str = f"{time_diff}s"
             
-            status_text += f"\n⏱ Next send in {time_str}"
+            status_text += f"\nNext send in {time_str}"
     else:
-        status_text += f"\n✓ No pending logs"
+        status_text += f"\nNo pending logs"
     
     # Configured user with safe default value
     username = get_username()  # Uses function to ensure uppercase
     if username:
-        status_text += f"\n👤 User: {username}"
+        status_text += f"\nUser: {username}"
     else:
-        status_text += f"\n⚠ User not configured"
+        status_text += f"\nUser not configured"
     
     return status_text
 
@@ -983,23 +983,23 @@ def get_menu():
     connection_status = get_connection_status()
     
     if running:
-        yield MenuItem(f'Status: ▶️ Running ({connection_status})', None, enabled=False)
+        yield MenuItem(f'Status: Running ({connection_status})', None, enabled=False)
         if pending_logs:
-            yield MenuItem(f'� Pending logs: {len(pending_logs)}', show_pending_logs_info)
-        yield MenuItem('⏸️ Stop Monitoring', stop_monitoring)
+            yield MenuItem(f'Pending logs: {len(pending_logs)}', show_pending_logs_info)
+        yield MenuItem('Stop Monitoring', stop_monitoring)
     else:
-        yield MenuItem(f'Status: ⏸️ Stopped ({connection_status})', None, enabled=False)
+        yield MenuItem(f'Status: Stopped ({connection_status})', None, enabled=False)
         if pending_logs:
-            yield MenuItem(f'� Pending logs: {len(pending_logs)}', show_pending_logs_info)
-        yield MenuItem('▶️ Start Monitoring', start_monitoring)
+            yield MenuItem(f'Pending logs: {len(pending_logs)}', show_pending_logs_info)
+        yield MenuItem('Start Monitoring', start_monitoring)
     
     yield Menu.SEPARATOR
-    yield MenuItem('⚙️ Settings', show_settings_dialog)
+    yield MenuItem('Settings', show_settings_dialog)
     if pending_logs:
-        yield MenuItem('🔄 Process Queue Now', lambda: process_pending_logs())
-        yield MenuItem('🗑 Clear Queue', clear_pending_queue)
-    yield MenuItem('🔌 Try Reconnect', lambda: authenticate())
-    yield MenuItem('❌ Exit', on_quit)
+        yield MenuItem('Process Queue Now', lambda: process_pending_logs())
+        yield MenuItem('Clear Queue', clear_pending_queue)
+    yield MenuItem('Try Reconnect', lambda: authenticate())
+    yield MenuItem('Exit', on_quit)
 
 def get_dynamic_app_name():
     """Generates dynamic application name with status"""
