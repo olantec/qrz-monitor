@@ -21,9 +21,17 @@ import base64
 import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from pystray import Icon, Menu, MenuItem
-from PIL import Image, ImageDraw
-import tkinter as tk
+
+# Try to import GUI libraries, but don't fail if they're not available
+HAS_DISPLAY = True
+try:
+    from pystray import Icon, Menu, MenuItem
+    from PIL import Image, ImageDraw
+    import tkinter as tk
+except ImportError as e:
+    HAS_DISPLAY = False
+    print(f"GUI libraries not available: {e}")
+    print("Running in text-only mode...")
 
 
 # --- Configuration ---
@@ -481,14 +489,16 @@ def add_to_pending_queue(log_data):
     
     pending_logs.append(log_entry)
     save_pending_logs()
-    update_menu()  # Updates menu to show pending logs
+    if HAS_DISPLAY:
+        update_menu()  # Updates menu to show pending logs
 
 def clear_pending_queue():
     """Clears pending logs queue"""
     global pending_logs
     pending_logs = []
     save_pending_logs()
-    update_menu()
+    if HAS_DISPLAY:
+        update_menu()
 
 def process_pending_logs():
     """Processes pending logs queue with automatic retry"""
@@ -538,7 +548,7 @@ def process_pending_logs():
     pending_logs = logs_to_keep + failed_logs
     save_pending_logs()
     
-    if successful_logs:
+    if successful_logs and HAS_DISPLAY:
         update_menu()  # Updates menu after successful sends
 
 def start_retry_scheduler():
@@ -556,7 +566,8 @@ def start_retry_scheduler():
             try:
                 process_pending_logs()
                 # Updates tooltip every cycle
-                update_menu()
+                if HAS_DISPLAY:
+                    update_menu()
                 
                 # Checks configuration changes every 30 seconds (3 cycles)
                 config_check_counter += 1
@@ -570,7 +581,8 @@ def start_retry_scheduler():
                     if current_username != get_username():
                         print("🔍 Configuration change detected - reloading...")
                         reload_config()
-                        update_menu()
+                        if HAS_DISPLAY:
+                            update_menu()
                 
                 time.sleep(10)  # Checks every 10 seconds
             except Exception as e:
@@ -676,7 +688,8 @@ def start_monitoring():
         running = True
         udp_thread = threading.Thread(target=udp_listener, daemon=True)
         udp_thread.start()
-        update_menu()
+        if HAS_DISPLAY:
+            update_menu()
         
         if auth_success:
             print("QRZ Monitor started - waiting for JTDX/WSJT-X data...")
@@ -691,12 +704,17 @@ def stop_monitoring():
         stop_retry_scheduler()
         if udp_thread:
             udp_thread.join(timeout=2)
-        update_menu()
+        if HAS_DISPLAY:
+            update_menu()
 
 # --- Graphical Interface (Configuration) ---
 
 def show_settings_dialog():
     """Opens configuration window directly in the same process"""
+    if not HAS_DISPLAY:
+        print("GUI not available. Please edit config.ini manually.")
+        return
+        
     try:
         import tkinter as tk
         from tkinter import Label, Entry, Button
@@ -742,7 +760,8 @@ def show_settings_dialog():
             
             # Reloads configuration in main program
             reload_config()
-            update_menu()
+            if HAS_DISPLAY:
+                update_menu()
 
         def on_enter_key(event):
             save_and_close()
@@ -828,6 +847,9 @@ def load_icon():
 
 def create_simple_icon(width, height, status_color='blue'):
     """Creates a simple image for icon as fallback."""
+    if not HAS_DISPLAY:
+        return None
+        
     image = Image.new('RGB', (width, height), 'black')
     dc = ImageDraw.Draw(image)
     
@@ -871,6 +893,9 @@ def create_simple_icon(width, height, status_color='blue'):
 
 def get_status_icon():
     """Returns a colored icon based on connection status"""
+    if not HAS_DISPLAY:
+        return None
+        
     try:
         # Tries to load favicon.ico first
         icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'favicon.ico')
@@ -888,32 +913,38 @@ def get_status_icon():
         return create_simple_icon(64, 64, 'red')
 
 def show_pending_logs_info():
-    """Shows detailed information of pending logs"""
+    """Shows detailed information about pending logs"""
     if not pending_logs:
-        print("📋 Pending Logs: No pending logs in queue.")
+        print("\nNo pending logs in queue.")
         return
     
-    info_lines = [f"📋 Total pending logs: {len(pending_logs)}"]
+    print(f"\nPending Logs ({len(pending_logs)} total):")
+    print("-" * 80)
     
-    for i, log_entry in enumerate(pending_logs, 1):
-        timestamp = log_entry.get('timestamp', 'N/A')
-        retry_count = log_entry.get('retry_count', 0)
-        max_retries = log_entry.get('max_retries', 3)
-        
-        if log_entry.get('next_retry', 0) == 0:
-            status = "Waiting for next session"
-        else:
-            next_retry_time = datetime.fromtimestamp(log_entry.get('next_retry', 0))
-            status = f"Next attempt: {next_retry_time.strftime('%H:%M:%S')}"
-        
-        info_lines.append(f"Log {i}:")
-        info_lines.append(f"  📅 Created: {timestamp}")
-        info_lines.append(f"  🔄 Attempts: {retry_count}/{max_retries}")
-        info_lines.append(f"  ⏰ Status: {status}")
-        info_lines.append("")
+    for i, log_data in enumerate(pending_logs[-10:], 1):  # Show last 10
+        try:
+            # Parse the log data
+            if isinstance(log_data, dict):
+                call = log_data.get('call', 'Unknown')
+                band = log_data.get('band', 'Unknown')
+                mode = log_data.get('mode', 'Unknown')
+                qso_date = log_data.get('qso_date', 'Unknown')
+                time_on = log_data.get('time_on', 'Unknown')
+                
+                print(f"{i:2d}. {call:12s} {band:6s} {mode:8s} {qso_date} {time_on}")
+            else:
+                print(f"{i:2d}. {str(log_data)[:60]}...")
+                
+        except Exception as e:
+            print(f"{i:2d}. [Error parsing log: {e}]")
     
-    # Displays in console instead of messagebox
-    print("\n".join(info_lines))
+    if len(pending_logs) > 10:
+        print(f"... and {len(pending_logs) - 10} more logs")
+    
+    print("-" * 80)
+    print(f"Total: {len(pending_logs)} pending logs")
+    
+    input("\nPress Enter to continue...")
 
 def get_connection_status():
     """Returns connection and authentication status"""
@@ -1017,7 +1048,7 @@ def get_dynamic_app_name():
 
 def update_menu():
     """Updates tray menu, tooltip and icon."""
-    if icon:
+    if HAS_DISPLAY and icon:
         icon.menu = Menu(get_menu)
         # Updates tooltip with dynamic information
         icon.title = get_tooltip_text()
@@ -1032,26 +1063,309 @@ def update_menu():
 def on_quit():
     """Actions to be executed on exit."""
     stop_monitoring()
-    if icon:
+    if HAS_DISPLAY and icon:
         icon.stop()
 
+def show_text_menu():
+    """Shows text-based menu for systems without GUI"""
+    print("\nQRZ Monitor is now running!")
+    print("Press Ctrl+C at any time to access the menu")
+    
+    try:
+        # Keep running and show periodic status
+        last_status_time = 0
+        while True:
+            current_time = time.time()
+            
+            # Show status every 30 seconds
+            if current_time - last_status_time > 30:
+                print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Status: {'RUNNING' if running else 'STOPPED'} - {get_connection_status()}")
+                if pending_logs:
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Pending logs: {len(pending_logs)}")
+                last_status_time = current_time
+            
+            time.sleep(1)
+            
+    except KeyboardInterrupt:
+        # Show interactive menu when user presses Ctrl+C
+        show_interactive_menu()
+
+def show_interactive_menu():
+    """Shows interactive menu"""
+    while True:
+        try:
+            print("\n" + "="*50)
+            print("QRZ MONITOR - INTERACTIVE MENU")
+            print("="*50)
+            
+            # Show current status
+            connection_status = get_connection_status()
+            status_text = f"Status: {'RUNNING' if running else 'STOPPED'} ({connection_status})"
+            print(status_text)
+            
+            udp_port = config.get('DEFAULT', 'UDPPort', fallback='2333')
+            print(f"UDP Port: {udp_port}")
+            
+            if pending_logs:
+                print(f"Pending logs: {len(pending_logs)}")
+            else:
+                print("No pending logs")
+            
+            username = get_username()
+            if username:
+                print(f"User: {username}")
+            else:
+                print("User not configured")
+            
+            print("\nOptions:")
+            print("1. Start/Stop Monitoring")
+            print("2. Show Pending Logs")
+            print("3. Process Queue Now")
+            print("4. Clear Queue")
+            print("5. Try Reconnect")
+            print("6. Configure Settings")
+            print("7. Return to Background")
+            print("0. Exit")
+            
+            choice = input("\nEnter choice (0-7): ").strip()
+            
+            if choice == "0":
+                print("Exiting QRZ Monitor...")
+                on_quit()
+                break
+            elif choice == "1":
+                if running:
+                    stop_monitoring()
+                    print("✓ Monitoring stopped.")
+                else:
+                    start_monitoring()
+                    print("✓ Monitoring started.")
+            elif choice == "2":
+                show_pending_logs_info()
+            elif choice == "3":
+                print("Processing pending logs...")
+                process_pending_logs()
+                print("✓ Done.")
+            elif choice == "4":
+                clear_pending_queue()
+                print("✓ Queue cleared.")
+            elif choice == "5":
+                print("Trying to reconnect...")
+                if authenticate():
+                    print("✓ Reconnected successfully!")
+                else:
+                    print("✗ Reconnection failed.")
+            elif choice == "6":
+                configure_settings_text()
+            elif choice == "7":
+                print("Returning to background mode...")
+                print("The program will continue running. Press Ctrl+C to return to this menu.")
+                show_text_menu()
+                break
+            else:
+                print("Invalid choice. Please try again.")
+                
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            on_quit()
+            break
+        except Exception as e:
+            print(f"Error: {e}")
+            input("Press Enter to continue...")
+
+def configure_settings_text():
+    """Configure settings in text mode"""
+    print("\n" + "="*50)
+    print("SETTINGS CONFIGURATION")
+    print("="*50)
+    
+    try:
+        # Show current settings
+        print("\nCurrent Settings:")
+        
+        api_key = config.get('DEFAULT', 'APIKey', fallback='')
+        if api_key:
+            print(f"API Key: {'*' * 20}...{api_key[-4:]}")
+        else:
+            print("API Key: Not set")
+        
+        udp_port = config.get('DEFAULT', 'UDPPort', fallback='2333')
+        print(f"UDP Port: {udp_port}")
+        
+        username = get_username()
+        if username:
+            print(f"Username: {username}")
+        else:
+            print("Username: Not set")
+        
+        print("\nWhat would you like to configure?")
+        print("1. API Key")
+        print("2. UDP Port")
+        print("3. Username")
+        print("0. Return to main menu")
+        
+        choice = input("\nEnter choice (0-3): ").strip()
+        
+        if choice == "1":
+            # Configure API Key
+            print("\nEnter your QRZ Digital API Key:")
+            print("(Get it from https://qrz.digital/settings)")
+            new_api_key = input("API Key: ").strip()
+            
+            if new_api_key:
+                config.set('DEFAULT', 'APIKey', new_api_key)
+                save_config()
+                print("✓ API Key saved successfully!")
+                
+                # Test the new API key
+                print("Testing API key...")
+                if authenticate():
+                    print("✓ API key is valid!")
+                else:
+                    print("✗ API key test failed. Please check your key.")
+            else:
+                print("No changes made.")
+        
+        elif choice == "2":
+            # Configure UDP Port
+            print(f"\nCurrent UDP Port: {udp_port}")
+            print("Enter new UDP Port (default is 2333):")
+            new_port = input("UDP Port: ").strip()
+            
+            try:
+                if new_port:
+                    port_num = int(new_port)
+                    if 1024 <= port_num <= 65535:
+                        config.set('DEFAULT', 'UDPPort', str(port_num))
+                        save_config()
+                        print(f"✓ UDP Port changed to {port_num}")
+                        print("Note: You'll need to restart the monitoring for the change to take effect.")
+                    else:
+                        print("✗ Port must be between 1024 and 65535")
+                else:
+                    print("No changes made.")
+            except ValueError:
+                print("✗ Invalid port number")
+        
+        elif choice == "3":
+            # Configure Username
+            print(f"\nCurrent Username: {username if username else 'Not set'}")
+            print("Enter new username:")
+            new_username = input("Username: ").strip()
+            
+            if new_username:
+                config.set('DEFAULT', 'Username', new_username)
+                save_config()
+                print(f"✓ Username changed to {new_username}")
+            else:
+                print("No changes made.")
+        
+        elif choice == "0":
+            return
+        else:
+            print("Invalid choice.")
+            
+        input("\nPress Enter to continue...")
+        
+    except Exception as e:
+        print(f"Error configuring settings: {e}")
+        input("Press Enter to continue...")
+
 def main():
-    global icon
+    global icon, HAS_DISPLAY
     
     load_config()
     load_pending_logs()  # Loads pending logs on startup
     
-    # Creates tray icon using favicon.ico
-    icon_image = load_icon()
-    initial_tooltip = get_tooltip_text()
-    dynamic_name = get_dynamic_app_name()
-    icon = Icon(dynamic_name, icon_image, initial_tooltip, menu=Menu(get_menu))
+    # Check if we're on Linux and if display is available
+    if sys.platform.startswith('linux'):
+        print("Detected Linux system")
+        # Check if DISPLAY is set
+        if not os.environ.get('DISPLAY'):
+            print("No DISPLAY environment variable found - running in text mode")
+            HAS_DISPLAY = False
+        elif not os.environ.get('XDG_CURRENT_DESKTOP') and not os.environ.get('DESKTOP_SESSION'):
+            print("No desktop environment detected - running in text mode")
+            HAS_DISPLAY = False
     
-    # Starts monitoring if there's a configured user
-    if get_username():  # Uses function to ensure uppercase
-        start_monitoring()
+    if HAS_DISPLAY:
+        try:
+            print("Attempting to create system tray icon...")
+            # Creates tray icon using favicon.ico
+            icon_image = get_status_icon()
+            initial_tooltip = get_tooltip_text()
+            dynamic_name = get_dynamic_app_name()
+            
+            print(f"Creating icon with name: {dynamic_name}")
+            print(f"Tooltip: {initial_tooltip}")
+            
+            icon = Icon(dynamic_name, icon_image, initial_tooltip, menu=Menu(get_menu))
+            
+            # Starts monitoring if there's a configured user
+            if get_username():  # Uses function to ensure uppercase
+                start_monitoring()
 
-    icon.run()
+            print("Starting system tray icon...")
+            
+            # Only set up timeout detection on Linux systems where tray support is uncertain
+            if sys.platform.startswith('linux'):
+                print("Linux detected - using timeout detection for tray support")
+                # Set up a timeout to detect if tray isn't working (Linux only)
+                import signal
+                def timeout_handler(signum, frame):
+                    print("\nSystem tray timeout - switching to text mode...")
+                    raise KeyboardInterrupt()
+                
+                # Give the tray 5 seconds to initialize
+                signal.signal(signal.SIGALRM, timeout_handler)
+                if hasattr(signal, 'alarm'):
+                    signal.alarm(5)
+                
+                try:
+                    icon.run()
+                except KeyboardInterrupt:
+                    print("\nSwitching to text mode...")
+                    HAS_DISPLAY = False
+                    if hasattr(signal, 'alarm'):
+                        signal.alarm(0)  # Cancel alarm
+            else:
+                # Windows and other systems - run normally without timeout
+                print("Windows/Other system detected - running tray normally")
+                icon.run()
+                
+        except Exception as e:
+            print(f"Failed to create system tray icon: {e}")
+            if sys.platform.startswith('linux'):
+                print("This is common on Linux systems without proper tray support")
+            print("Falling back to text mode...")
+            HAS_DISPLAY = False
+    
+    if not HAS_DISPLAY:
+        # Text-only mode
+        print("\n" + "="*60)
+        print("QRZ MONITOR - TEXT MODE")
+        print("="*60)
+        if sys.platform.startswith('linux'):
+            print("System tray not available - using text interface")
+            print("This is normal on many Linux systems")
+        else:
+            print("GUI not available - using text interface")
+        print("="*60)
+        
+        # Check credentials first
+        username = get_username()
+        password = get_password()
+        
+        if not username or not password:
+            print("\nCredentials not configured. Please configure now:")
+            configure_settings_text()
+        
+        # Start monitoring automatically if configured
+        if get_username():
+            start_monitoring()
+        
+        # Show text menu
+        show_text_menu()
 
 if __name__ == "__main__":
     main()
